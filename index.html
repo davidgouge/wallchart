@@ -46,10 +46,15 @@
   .mrow .tl{text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .mrow .tr{text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .mrow .dash{color:var(--muted)}
-  input.sc{width:30px;text-align:center;background:var(--bg);color:var(--txt);
-    border:1px solid var(--line);border-radius:5px;padding:3px 0;font-size:12px}
-  input.sc:focus{outline:none;border-color:var(--accent2)}
-  input.sc:disabled{opacity:.35}
+  /* hide native number spinners so they don't crowd the small boxes */
+  input[type=number]{-moz-appearance:textfield;appearance:textfield}
+  input[type=number]::-webkit-outer-spin-button,
+  input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+  input.sc{width:42px;height:32px;text-align:center;background:var(--bg);color:var(--txt);
+    border:1px solid var(--line);border-radius:6px;padding:0;font-size:15px;font-weight:600}
+  input.sc:focus{outline:none;border-color:var(--accent2);box-shadow:0 0 0 2px rgba(56,139,253,.25)}
+  input.sc:hover:not(:disabled){border-color:#3a4456}
+  input.sc:disabled{opacity:.3}
   /* third place */
   .third{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:6px 12px 12px;max-width:560px}
   table.tp{width:100%;border-collapse:collapse;font-size:12.5px}
@@ -74,8 +79,9 @@
   .provmark{color:var(--amber);font-size:9px;vertical-align:super;margin-left:1px}
   .krow.win .kt{color:var(--accent);font-weight:600}
   .pen{font-size:9px;color:var(--muted)}
-  input.pn{width:24px;text-align:center;background:var(--bg);color:var(--amber);
-    border:1px solid var(--line);border-radius:4px;padding:1px 0;font-size:10px}
+  input.pn{width:30px;height:24px;text-align:center;background:var(--bg);color:var(--amber);
+    border:1px solid var(--line);border-radius:5px;padding:0;font-size:12px}
+  input.pn:focus{outline:none;border-color:var(--accent2)}
   .penrow{display:flex;justify-content:flex-end;align-items:center;gap:4px;margin-top:2px;
     font-size:9px;color:var(--muted)}
   .champ{margin-top:8px;background:linear-gradient(135deg,#2a230a,#1c2330);border:1px solid var(--gold);
