@@ -235,20 +235,24 @@ function standings(L){
     else {a.D++;b.D++;a.Pts++;b.Pts++;}
   }
   st.forEach(t=>t.GD=t.GF-t.GA);
-  // primary sort: Pts, GD, GF
-  st.sort((a,b)=> b.Pts-a.Pts || b.GD-a.GD || b.GF-a.GF || a.name.localeCompare(b.name));
-  // head-to-head mini-league for teams tied on Pts+GD+GF
+  // sort by competition points; teams level on points are split by the
+  // head-to-head mini-league first, then by overall GD / GF / name
+  st.sort((a,b)=> b.Pts-a.Pts || a.name.localeCompare(b.name));
+  const out=[];
   for(let i=0;i<st.length;){
     let j=i+1;
-    while(j<st.length && st[j].Pts===st[i].Pts && st[j].GD===st[i].GD && st[j].GF===st[i].GF) j++;
-    if(j-i>1) tiebreakH2H(L, st, i, j);
+    while(j<st.length && st[j].Pts===st[i].Pts) j++;
+    out.push(...orderTied(L, st.slice(i,j)));
     i=j;
   }
-  return st;
+  return out;
 }
-function tiebreakH2H(L, st, lo, hi){
+// Order teams that are level on points: head-to-head (mini-league points,
+// then mini GD, then mini GF) takes priority over overall GD / GF / name.
+function orderTied(L, teams){
+  if(teams.length===1) return teams;
   const sc = state.groups[L];
-  const idxs = st.slice(lo,hi).map(t=>t.i);
+  const idxs = teams.map(t=>t.i);
   const mini = {}; idxs.forEach(i=>mini[i]={Pts:0,GD:0,GF:0});
   for(const m of MATCHDEFS){
     const r = sc[m.idx]; if(!r||r[0]==null||r[1]==null) continue;
@@ -257,10 +261,29 @@ function tiebreakH2H(L, st, lo, hi){
     mini[y].GF+=r[1]; mini[y].GD+=r[1]-r[0];
     if(r[0]>r[1]) mini[x].Pts+=3; else if(r[1]>r[0]) mini[y].Pts+=3; else {mini[x].Pts++;mini[y].Pts++;}
   }
-  const seg = st.slice(lo,hi).sort((a,b)=>
-    mini[b.i].Pts-mini[a.i].Pts || mini[b.i].GD-mini[a.i].GD || mini[b.i].GF-mini[a.i].GF
-    || a.name.localeCompare(b.name));
-  for(let k=0;k<seg.length;k++) st[lo+k]=seg[k];
+  const sorted = teams.slice().sort((a,b)=>
+    mini[b.i].Pts-mini[a.i].Pts || mini[b.i].GD-mini[a.i].GD || mini[b.i].GF-mini[a.i].GF || 0);
+  // resolve any sub-groups still level on every head-to-head criterion
+  const out=[];
+  for(let i=0;i<sorted.length;){
+    let j=i+1;
+    while(j<sorted.length &&
+          mini[sorted[j].i].Pts===mini[sorted[i].i].Pts &&
+          mini[sorted[j].i].GD ===mini[sorted[i].i].GD &&
+          mini[sorted[j].i].GF ===mini[sorted[i].i].GF) j++;
+    const sub = sorted.slice(i,j);
+    if(sub.length===1){ out.push(sub[0]); }
+    else if(sub.length===teams.length){
+      // head-to-head gave no separation -> fall back to overall GD / GF / name
+      sub.sort((a,b)=> b.GD-a.GD || b.GF-a.GF || a.name.localeCompare(b.name));
+      out.push(...sub);
+    } else {
+      // a smaller still-tied subset -> recompute head-to-head among just them
+      out.push(...orderTied(L, sub));
+    }
+    i=j;
+  }
+  return out;
 }
 
 function groupComplete(L){ return state.groups[L].every(r=>r&&r[0]!=null&&r[1]!=null); }
