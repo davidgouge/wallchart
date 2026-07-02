@@ -71,7 +71,8 @@
     margin:0 0 2px;position:sticky;left:0}
   .kmatch{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:6px 8px}
   .kmatch.final{border-color:var(--gold)}
-  .kmatch .knum{font-size:9.5px;color:var(--muted);margin-bottom:3px;letter-spacing:.5px}
+  .kmatch .knum{font-size:9.5px;color:var(--muted);margin-bottom:1px;letter-spacing:.5px}
+  .kmatch .kdate{font-size:9.5px;color:var(--accent2);margin-bottom:4px;letter-spacing:.2px}
   .krow{display:grid;grid-template-columns:1fr auto auto;align-items:center;gap:5px;padding:2px 0}
   .krow .kt{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:12.5px}
   .krow .kt.ph{color:var(--muted);font-style:italic;font-size:11px}
@@ -192,8 +193,8 @@ const KO = {
   83:{a:["ru","K"],b:["ru","L"]}, 84:{a:["w","H"],b:["ru","J"]},
   85:{a:["w","B"],b:["3",85]},    86:{a:["w","J"],b:["ru","H"]},
   87:{a:["w","K"],b:["3",87]},    88:{a:["ru","D"],b:["ru","G"]},
-  89:{a:["wm",74],b:["wm",77]},   90:{a:["wm",73],b:["wm",75]},
-  91:{a:["wm",76],b:["wm",78]},   92:{a:["wm",79],b:["wm",80]},
+  89:{a:["wm",75],b:["wm",78]},   90:{a:["wm",73],b:["wm",76]},
+  91:{a:["wm",74],b:["wm",77]},   92:{a:["wm",79],b:["wm",80]},
   93:{a:["wm",83],b:["wm",84]},   94:{a:["wm",81],b:["wm",82]},
   95:{a:["wm",86],b:["wm",88]},   96:{a:["wm",85],b:["wm",87]},
   97:{a:["wm",89],b:["wm",90]},   98:{a:["wm",93],b:["wm",94]},
@@ -208,6 +209,32 @@ const ROUNDS = [
   {name:"Semi-finals", ids:[101,102]},
   {name:"Final", ids:[104,103]}  // 103 = third-place play-off, rendered after final
 ];
+
+// Official FIFA kickoff time for each knockout match, stored as a UTC instant
+// (source: FIFA World Cup 26 match schedule). Rendered in BST below. Match 79
+// (Mexico v Ecuador) uses its originally scheduled 19:00 UTC−6 slot.
+const KO_TIME = {
+  73:"2026-06-28T19:00:00Z", 74:"2026-06-29T17:00:00Z", 75:"2026-06-29T20:30:00Z",
+  76:"2026-06-30T01:00:00Z", 77:"2026-06-30T17:00:00Z", 78:"2026-06-30T21:00:00Z",
+  79:"2026-07-01T01:00:00Z", 80:"2026-07-01T16:00:00Z", 81:"2026-07-01T20:00:00Z",
+  82:"2026-07-02T00:00:00Z", 83:"2026-07-02T23:00:00Z", 84:"2026-07-02T19:00:00Z",
+  85:"2026-07-03T03:00:00Z", 86:"2026-07-03T22:00:00Z", 87:"2026-07-04T01:30:00Z",
+  88:"2026-07-03T18:00:00Z",
+  89:"2026-07-04T21:00:00Z", 90:"2026-07-04T17:00:00Z", 91:"2026-07-05T20:00:00Z",
+  92:"2026-07-06T00:00:00Z", 93:"2026-07-06T19:00:00Z", 94:"2026-07-07T00:00:00Z",
+  95:"2026-07-07T16:00:00Z", 96:"2026-07-07T20:00:00Z",
+  97:"2026-07-09T20:00:00Z", 98:"2026-07-10T19:00:00Z", 99:"2026-07-11T21:00:00Z",
+  100:"2026-07-12T01:00:00Z",
+  101:"2026-07-14T19:00:00Z", 102:"2026-07-15T19:00:00Z",
+  103:"2026-07-18T21:00:00Z", 104:"2026-07-19T19:00:00Z"
+};
+const KO_FMT = new Intl.DateTimeFormat("en-GB",{timeZone:"Europe/London",
+  weekday:"short",day:"numeric",month:"short",hour:"2-digit",minute:"2-digit",hour12:false});
+function koTime(id){
+  const iso=KO_TIME[id]; if(!iso) return "";
+  const p={}; KO_FMT.formatToParts(new Date(iso)).forEach(x=>p[x.type]=x.value);
+  return `${p.weekday} ${p.day} ${p.month} · ${p.hour}:${p.minute} BST`;
+}
 
 /* ---------------- State ---------------- */
 const KEY = "wc2026-wallchart-v1";
@@ -443,7 +470,9 @@ function renderBracket(comp){
       const label = isFinal?"Final":is3rd?"Third-place play-off":("Match "+id);
       const card=document.createElement("div");
       card.className="kmatch"+(isFinal?" final":"");
-      card.innerHTML = `<div class="knum">${label}</div>` + krow(id,"a",r) + krow(id,"b",r) + penRow(id,r);
+      card.innerHTML = `<div class="knum">${label}</div>` +
+        `<div class="kdate">${koTime(id)}</div>` +
+        krow(id,"a",r) + krow(id,"b",r) + penRow(id,r);
       col.appendChild(card);
     }
     wrap.appendChild(col);
